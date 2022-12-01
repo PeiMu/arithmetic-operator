@@ -7,11 +7,18 @@ set(CMAKE_CXX_FLAGS "-g -Wall")
 
 set(fixed_point_operator_files
         fixed_point_operator/fixed_point_operator.cpp
-        fixed_point_operator/fixed_point_operator.h
+)
+
+set(bit_operator_files
+        bit_operator/bit_operator.cpp
 )
 
 add_library(fixed_point_operator_lib
         ${fixed_point_operator_files}
+)
+
+add_library(bit_operator_lib
+        ${bit_operator_files}
 )
 
 add_executable(arithmetic_operator
@@ -20,6 +27,7 @@ add_executable(arithmetic_operator
 
 target_link_libraries(arithmetic_operator
         fixed_point_operator_lib
+        bit_operator_lib
 )
 
 include(FetchContent)
@@ -34,15 +42,16 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(
-        fixed_point_operator_test
+        arithmetic_operator_test
         fixed_point_operator/gtest.cpp
 )
 
 target_link_libraries(
-        fixed_point_operator_test
+        arithmetic_operator_test
         fixed_point_operator_lib
+        bit_operator_lib
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(fixed_point_operator_test)
+gtest_discover_tests(arithmetic_operator_test)
