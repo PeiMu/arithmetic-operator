@@ -8,10 +8,16 @@
 
 class FixedPointOpTest {
 public:
+    FixedPointOpTest() {
+        a_quant = (int16_t)(a_ * (1 << Q));
+        b_quant = (int16_t)(b_ * (1 << Q));
+    }
+    ~FixedPointOpTest() = default;
+
     double a_ = 1.5;
     double b_ = 1.6;
-    int16_t a_quant = (int16_t)(a_ * (1 << Q));
-    int16_t b_quant = (int16_t)(b_ * (1 << Q));
+    int16_t a_quant = 0;
+    int16_t b_quant = 0;
 };
 
 TEST(FixedPointOpTest, FixedPointAdd) {
@@ -20,7 +26,7 @@ TEST(FixedPointOpTest, FixedPointAdd) {
     double quant_res = (float)res/(1<<Q);
     double real_res = tester.a_ + tester.b_;
     EXPECT_LE(fabs(quant_res-real_res), 1.0f/(1<<Q));
-    EXPECT_STRNE("QuantizationCorrectly", "SUCCESS");
+    EXPECT_STRNE("FixedPointAdd", "SUCCESS");
 }
 
 TEST(FixedPointOpTest, FixedPointSub) {
@@ -29,7 +35,7 @@ TEST(FixedPointOpTest, FixedPointSub) {
     double quant_res = (float)res/(1<<Q);
     double real_res = tester.a_ - tester.b_;
     EXPECT_LE(fabs(quant_res-real_res), 1.0f/(1<<Q));
-    EXPECT_STRNE("QuantizationCorrectly", "SUCCESS");
+    EXPECT_STRNE("FixedPointSub", "SUCCESS");
 }
 
 TEST(FixedPointOpTest, FixedPointMul) {
@@ -38,7 +44,7 @@ TEST(FixedPointOpTest, FixedPointMul) {
     double quant_res = (float)res/(1<<Q);
     double real_res = tester.a_ * tester.b_;
     EXPECT_LE(fabs(quant_res-real_res), 1.0f/(1<<Q));
-    EXPECT_STRNE("QuantizationCorrectly", "SUCCESS");
+    EXPECT_STRNE("FixedPointMul", "SUCCESS");
 }
 
 TEST(FixedPointOpTest, FixedPointDiv) {
@@ -47,5 +53,5 @@ TEST(FixedPointOpTest, FixedPointDiv) {
     double quant_res = (float)res/(1<<Q);
     double real_res = tester.a_ / tester.b_;
     EXPECT_LE(fabs(quant_res-real_res), 1.0f/(1<<Q));
-    EXPECT_STRNE("QuantizationCorrectly", "SUCCESS");
+    EXPECT_STRNE("FixedPointDiv", "SUCCESS");
 }

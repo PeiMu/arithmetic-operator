@@ -13,12 +13,20 @@ set(bit_operator_files
         bit_operator/bit_operator.cpp
 )
 
+set(soft_float_operator_files
+        soft_float_operator/soft_float_operator.cpp
+)
+
 add_library(fixed_point_operator_lib
         ${fixed_point_operator_files}
 )
 
 add_library(bit_operator_lib
         ${bit_operator_files}
+)
+
+add_library(soft_float_operator_lib
+        ${soft_float_operator_files}
 )
 
 add_executable(arithmetic_operator
@@ -28,6 +36,7 @@ add_executable(arithmetic_operator
 target_link_libraries(arithmetic_operator
         fixed_point_operator_lib
         bit_operator_lib
+        soft_float_operator_lib
 )
 
 include(FetchContent)
@@ -44,12 +53,14 @@ enable_testing()
 add_executable(
         arithmetic_operator_test
         fixed_point_operator/gtest.cpp
+        soft_float_operator/gtest.cpp
 )
 
 target_link_libraries(
         arithmetic_operator_test
         fixed_point_operator_lib
         bit_operator_lib
+        soft_float_operator_lib
         GTest::gtest_main
 )
 
