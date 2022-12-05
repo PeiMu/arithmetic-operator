@@ -17,7 +17,7 @@ cd build/ && ctest
 ```
 ## Test precision of different methods
 ```bash
-cd  build
+cd build
 cmake -DCMAKE_C_FLAGS="-D TEST_PRECISION" ..
 make
 ./arithmetic_operator

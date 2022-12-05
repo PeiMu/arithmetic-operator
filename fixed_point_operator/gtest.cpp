@@ -9,8 +9,8 @@
 class FixedPointOpTest {
 public:
     FixedPointOpTest() {
-        a_quant = (int16_t)(a_ * (1 << Q));
-        b_quant = (int16_t)(b_ * (1 << Q));
+        a_quant = (int16_t)round(a_ * (1 << Q));
+        b_quant = (int16_t)round(b_ * (1 << Q));
     }
     ~FixedPointOpTest() = default;
 

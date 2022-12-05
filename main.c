@@ -18,7 +18,7 @@ int iteration_num = 1;
 #elif defined(TEST_TIME_CONSUMPTION)
 int iteration_num = 1000000;
 #else
-#error "Test mode not defined"
+int iteration_num = 1;
 #endif
 
 #define array_size 5
