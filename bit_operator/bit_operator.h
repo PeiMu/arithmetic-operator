@@ -5,7 +5,7 @@
 #ifndef ARITHMETIC_OPERATOR_BIT_OPERATOR_H
 #define ARITHMETIC_OPERATOR_BIT_OPERATOR_H
 
-#include <climits>
-#include <iostream>
+#include <limits.h>
+#include <stdio.h>
 
 #endif //ARITHMETIC_OPERATOR_BIT_OPERATOR_H

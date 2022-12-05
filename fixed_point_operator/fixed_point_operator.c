@@ -7,11 +7,13 @@
 // saturate to range of int16_t
 int16_t upSat16(int32_t x)
 {
-    if (x > INT16_MAX || x < INT16_MIN)
+    if (x > INT16_MAX || x < INT16_MIN) {
         /*
          * In the real code, it changes to a higher bit number
          * */
+        printf("x = %d\n", x);
         assert(false && "overflow!!!");
+    }
     else
         return (int16_t)x;
 }

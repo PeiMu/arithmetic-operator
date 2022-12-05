@@ -3,18 +3,18 @@ project(arithmetic_operator)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_CXX_FLAGS "-g -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall")
 
 set(fixed_point_operator_files
-        fixed_point_operator/fixed_point_operator.cpp
+        fixed_point_operator/fixed_point_operator.c
 )
 
 set(bit_operator_files
-        bit_operator/bit_operator.cpp
+        bit_operator/bit_operator.c
 )
 
 set(soft_float_operator_files
-        soft_float_operator/soft_float_operator.cpp
+        soft_float_operator/soft_float_operator.c
 )
 
 add_library(fixed_point_operator_lib
@@ -30,13 +30,14 @@ add_library(soft_float_operator_lib
 )
 
 add_executable(arithmetic_operator
-        main.cpp
+        main.c
 )
 
 target_link_libraries(arithmetic_operator
         fixed_point_operator_lib
         bit_operator_lib
         soft_float_operator_lib
+        m
 )
 
 include(FetchContent)

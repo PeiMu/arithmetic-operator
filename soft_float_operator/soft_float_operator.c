@@ -48,7 +48,7 @@ these four paragraphs for those parts of this code that are retained.
 =============================================================================*/
 
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include "include/milieu.h"
@@ -470,13 +470,13 @@ addFloat64Sigs (float64 a, float64 b, flag zSign)
     }
     else
     {
-        if (aExp == 0x7FF) // todo
+        if (aExp == 0x7FF)
         {
-            if (aSig | bSig) // todo
+            if (aSig | bSig)
                 return propagateFloat64NaN (a, b);
             return a;
         }
-        if (aExp == 0) // todo
+        if (aExp == 0)
             return packFloat64 (zSign, 0, (aSig + bSig) >> 9);
         zSig = LIT64 (0x4000000000000000) + aSig + bSig;
         zExp = aExp;
