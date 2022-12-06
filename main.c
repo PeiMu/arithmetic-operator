@@ -2,26 +2,26 @@
 #include "soft_float_operator/include/soft_float.h"
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 /*
  * random floating point, [min, max]
  * */
-double
-randomDouble(double min, double max)
+double randomDouble(double min, double max)
 {
     double randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
     return randDbValue;
 }
 
 #if defined(TEST_PRECISION)
-int iteration_num = 1;
+#define iteration_num 1
 #elif defined(TEST_TIME_CONSUMPTION)
-int iteration_num = 1000000;
+#define iteration_num 100
 #else
-int iteration_num = 1;
+#define iteration_num 1
 #endif
 
-#define array_size 5
+#define array_size 100000
 
 /*
  * a common case testsuite,
@@ -68,18 +68,17 @@ void soft_float_add_test(const double* leftOp, const double* rightOp, double* re
  * */
 void round_add_test(const double* leftOp, const double* rightOp, double* result) {
     for (size_t idx = 0; idx < array_size; idx++) {
-        int qr_left = (int)round(leftOp[idx]);
-        int qr_right = (int)round(rightOp[idx]);
+        int qr_left = (int)(leftOp[idx]+0.5);
+        int qr_right = (int)(rightOp[idx]+0.5);
         int qr_result = qr_left + qr_right;
-        /* the resolution of 'double' is 0.98, so
-         * (int)(12.789/0.98) = 13;
-         * (int)(15.653/0.98) = 16;
+        /* round constant
+         * (int)(12.789) = 13;
+         * (int)(15.653) = 16;
          * */
         int qr_x = qr_left + 13;
         int qr_y = qr_right + 16;
         int qr_z = qr_x + qr_y;
-        double z = qr_z;
-        int temp_z = (int)z%100;
+        int temp_z = qr_z%100;
         result[idx] = qr_result * temp_z;
     }
 }
@@ -90,97 +89,145 @@ void round_add_test(const double* leftOp, const double* rightOp, double* result)
  * the magic numbers and operators in this function are random and meaningless.
  * */
 void fixed_point_add_test(const double* leftOp, const double* rightOp, double* result) {
-    int16_t c1 = (int16_t)round(12.789 * (1 << Q));
-    int16_t c2 = (int16_t)round(15.653 * (1 << Q));
+    int c1 = (int)round(12.789 * (1 << Q));
+    int c2 = (int)round(15.653 * (1 << Q));
     for (size_t idx = 0; idx < array_size; idx++) {
-        int16_t leftOpround = (int16_t)round(leftOp[idx] * (1 << Q));
-        int16_t rightOpround = (int16_t)round(rightOp[idx] * (1 << Q));
-        int16_t resultround = q_add(leftOpround, rightOpround);
-        int16_t x = q_add(leftOpround, c1);
-        int16_t y = q_add(rightOpround, c2);
-        int16_t z = q_add(x, y);
+        int leftOpround = (int)round(leftOp[idx] * (1 << Q));
+        int rightOpround = (int)round(rightOp[idx] * (1 << Q));
+        int resultround = q_add(leftOpround, rightOpround);
+        int x = q_add(leftOpround, c1);
+        int y = q_add(rightOpround, c2);
+        int z = q_add(x, y);
         /*
          * For non-linear operator, change back to floating-point
          * */
         double fp_z = (double)(z >> Q);
-        int16_t temp_z = (int16_t)fp_z%100;
+        int temp_z = (int)fp_z%100;
         temp_z = temp_z << Q;
         /*
          * When the range analyzer find the range of result might need 32 bits,
          * it changes to upper precision
          * */
-        int32_t resultround_32 = q_mul_32(resultround, temp_z);
-        result[idx] = (double)resultround_32 / (1<<Q);
+        int result_round_32 = q_mul_32(resultround, temp_z);
+        result[idx] = (double)result_round_32 / (1<<Q);
     }
 }
 
 /*
  * simplified version of fixed_point_add_test function.
  * */
-void fixed_point_add_test_simplified(const double* leftOp, const double* rightOp, double* result) {
-    const int16_t c1 = (int16_t)(12.789 * (1 << Q)+0.5);
-    const int16_t c2 = (int16_t)(15.653 * (1 << Q)+0.5);
+const int c1 = (int)(12.789 * (1 << Q)+0.5);
+const int c2 = (int)(15.653 * (1 << Q)+0.5);
+
+void fixed_point_add_test_simplified(const int* leftOp, const int* rightOp, int* result) {
     for (size_t idx = 0; idx < array_size; idx++) {
-        int16_t leftOpround = (int16_t)(leftOp[idx] * (1 << Q)+0.5);
-        int16_t rightOpround = (int16_t)(rightOp[idx] * (1 << Q)+0.5);
-        int16_t resultround = leftOpround + rightOpround;
-        int16_t x = leftOpround + c1;
-        int16_t y = rightOpround + c2;
-        int16_t z = x + y;
+        int resultround = leftOp[idx] + rightOp[idx];
+        int x = leftOp[idx] + c1;
+        int y = rightOp[idx] + c2;
+        int z = x + y;
         /*
          * For non-linear operator, change back to floating-point
          * */
-        int16_t temp_z = (z >> Q)%100;
+        int temp_z = (z >> Q)%100;
         temp_z = temp_z << Q;
         /*
          * When the range analyzer find the range of result might need 32 bits,
          * it changes to upper precision
          * */
-        int32_t resultround_32 = (resultround * temp_z + K) >> Q;
-        result[idx] = (double)resultround_32 / (1<<Q);
+        result[idx] = (resultround * temp_z + K) >> Q;
     }
 }
 
-int main(int argc, char** argv) {
+#define NS_PER_SECOND 1000000000
 
-    for (int i = 0; i < iteration_num; i++)
+void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
+{
+    td->tv_nsec = t2.tv_nsec - t1.tv_nsec;
+    td->tv_sec  = t2.tv_sec - t1.tv_sec;
+    if (td->tv_sec > 0 && td->tv_nsec < 0)
     {
-        double leftOps[array_size];
-        double rightOps[array_size];
+        td->tv_nsec += NS_PER_SECOND;
+        td->tv_sec--;
+    }
+    else if (td->tv_sec < 0 && td->tv_nsec > 0)
+    {
+        td->tv_nsec -= NS_PER_SECOND;
+        td->tv_sec++;
+    }
+}
+
+double leftOps[iteration_num][array_size];
+double rightOps[iteration_num][array_size];
+int fixed_leftOps[iteration_num][array_size];
+int fixed_rightOps[iteration_num][array_size];
+
+int main(int argc, char** argv) {
+    for (int i = 0; i < iteration_num; i++) {
         for (size_t idx = 0; idx < array_size; idx++) {
-            leftOps[idx] = randomDouble(0, 63);
-            rightOps[idx] = randomDouble(0, 63);
+            leftOps[i][idx] = randomDouble(0, 63);
+            rightOps[i][idx] = randomDouble(0, 63);
+#if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_FIXEDPOINT)) || defined(TEST_PRECISION)
+            fixed_leftOps[i][idx] = (int) (leftOps[i][idx] * (1 << Q) + 0.5);
+            fixed_rightOps[i][idx] = (int) (rightOps[i][idx] * (1 << Q) + 0.5);
+#endif
         }
+    }
+#if defined(TEST_PRECISION)
+    double sf_error = 0, qr_error = 0, fp_error = 0;
+#endif
+
+#if defined(TEST_TIME_CONSUMPTION)
+    struct timespec start_time;
+    clock_gettime(CLOCK_REALTIME, &(start_time));
+#endif
+
+    for (int i = 0; i < iteration_num; i++) {
 #if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_DOUBLE)) || defined(TEST_PRECISION)
         double db_result[array_size];
-        double_add_test(leftOps, rightOps, db_result);
+        double_add_test(leftOps[i], rightOps[i], db_result);
 #endif
 #if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_SOFT_FLOAT)) || defined(TEST_PRECISION)
         double sf_result[array_size];
-        soft_float_add_test(leftOps, rightOps, sf_result);
+        soft_float_add_test(leftOps[i], rightOps[i], sf_result);
 #endif
 #if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_ROUND)) || defined(TEST_PRECISION)
         double qr_result[array_size];
-        round_add_test(leftOps, rightOps, qr_result);
+        round_add_test(leftOps[i], rightOps[i], qr_result);
 #endif
 #if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_FIXEDPOINT)) || defined(TEST_PRECISION)
-        double fp_result[array_size];
-        fixed_point_add_test_simplified(leftOps, rightOps, fp_result);
+        int fixed_fp_result[array_size];
+        fixed_point_add_test_simplified(fixed_leftOps[i], fixed_rightOps[i], fixed_fp_result);
 #endif
 
 #if defined(TEST_PRECISION)
-        double sf_error = 0, qr_error = 0, fp_error = 0;
+        double fp_result[array_size];
         for (size_t idx = 0; idx < array_size; idx++) {
-            sf_error += fabs(sf_result[idx] - db_result[idx]) / db_result[idx];
-            qr_error += fabs(qr_result[idx] - db_result[idx]) / db_result[idx];
-            fp_error += fabs(fp_result[idx] - db_result[idx]) / db_result[idx];
+            sf_error += db_result[idx] == 0 ? sf_result[idx] : fabs(sf_result[idx] - db_result[idx]) / db_result[idx];
+            qr_error += db_result[idx] == 0 ? qr_result[idx] : fabs(qr_result[idx] - db_result[idx]) / db_result[idx];
+
+            fp_result[idx] = (double)fixed_fp_result[idx] / (1<<Q);
+            fp_error += db_result[idx] == 0 ? fp_result[idx] : fabs(fp_result[idx] - db_result[idx]) / db_result[idx];
         }
-        sf_error = sf_error / array_size * 100;
-        qr_error = qr_error / array_size * 100;
-        fp_error = fp_error / array_size * 100;
-        printf("accumulation error: soft-float: %f%\tround-resolution: %f%\tfixed-point: %f%\n",
-               sf_error, qr_error, fp_error);
+        sf_error /= array_size;
+        qr_error /= array_size;
+        fp_error /= array_size;
 #endif
     }
+
+#if defined(TEST_TIME_CONSUMPTION)
+    struct timespec end_time, time_consumption;
+    clock_gettime(CLOCK_REALTIME, &(end_time));
+    sub_timespec(start_time, end_time, &time_consumption);
+    printf("%d.%.9ld\n", (int)time_consumption.tv_sec, time_consumption.tv_nsec);
+#endif
+
+#if defined(TEST_PRECISION)
+    sf_error = sf_error * 100 / iteration_num;
+    qr_error = qr_error * 100 / iteration_num;
+    fp_error = fp_error * 100 / iteration_num;
+    printf("accumulation error: soft-float: %f%\tround-resolution: %f%\t"
+           "fixed-point: %f%\n", sf_error, qr_error, fp_error);
+#endif
+
     return 0;
 }
