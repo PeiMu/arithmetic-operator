@@ -114,6 +114,33 @@ void fixed_point_add_test(const double* leftOp, const double* rightOp, double* r
     }
 }
 
+/*
+ * simplified version of fixed_point_add_test function.
+ * */
+void fixed_point_add_test_simplified(const double* leftOp, const double* rightOp, double* result) {
+    const int16_t c1 = (int16_t)(12.789 * (1 << Q)+0.5);
+    const int16_t c2 = (int16_t)(15.653 * (1 << Q)+0.5);
+    for (size_t idx = 0; idx < array_size; idx++) {
+        int16_t leftOpround = (int16_t)(leftOp[idx] * (1 << Q)+0.5);
+        int16_t rightOpround = (int16_t)(rightOp[idx] * (1 << Q)+0.5);
+        int16_t resultround = leftOpround + rightOpround;
+        int16_t x = leftOpround + c1;
+        int16_t y = rightOpround + c2;
+        int16_t z = x + y;
+        /*
+         * For non-linear operator, change back to floating-point
+         * */
+        int16_t temp_z = (z >> Q)%100;
+        temp_z = temp_z << Q;
+        /*
+         * When the range analyzer find the range of result might need 32 bits,
+         * it changes to upper precision
+         * */
+        int32_t resultround_32 = (resultround * temp_z + K) >> Q;
+        result[idx] = (double)resultround_32 / (1<<Q);
+    }
+}
+
 int main(int argc, char** argv) {
 
     for (int i = 0; i < iteration_num; i++)
@@ -138,7 +165,7 @@ int main(int argc, char** argv) {
 #endif
 #if (defined(TEST_TIME_CONSUMPTION) && defined(BENCHMARK_SUITE_FIXEDPOINT)) || defined(TEST_PRECISION)
         double fp_result[array_size];
-        fixed_point_add_test(leftOps, rightOps, fp_result);
+        fixed_point_add_test_simplified(leftOps, rightOps, fp_result);
 #endif
 
 #if defined(TEST_PRECISION)
