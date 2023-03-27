@@ -1,6 +1,6 @@
 # arithmetic operators
 
-## fixed-point-operator
+## fixed-point operation
 add, sub, mul, div
 
 ## bit operation
@@ -8,6 +8,10 @@ add, sub, mul, div
 
 ## soft float operation
 add, sub, mul, div
+
+## bitwise and mod operation
+bitwise and/or/xor
+remainder
 
 ## Build and Run
 ```bash

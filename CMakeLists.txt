@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(arithmetic_operator)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall")
 
@@ -17,6 +17,10 @@ set(soft_float_operator_files
         soft_float_operator/soft_float_operator.c
 )
 
+set(bitwise_and_mod_files
+        bitwise_and_mod/non_linear_bin_op.cpp
+)
+
 add_library(fixed_point_operator_lib
         ${fixed_point_operator_files}
 )
@@ -29,6 +33,10 @@ add_library(soft_float_operator_lib
         ${soft_float_operator_files}
 )
 
+add_library(bitwise_and_mod_lib
+        ${bitwise_and_mod_files}
+)
+
 add_executable(arithmetic_operator
         main.c
 )
@@ -37,6 +45,7 @@ target_link_libraries(arithmetic_operator
         fixed_point_operator_lib
         bit_operator_lib
         soft_float_operator_lib
+        bitwise_and_mod_lib
         m
 )
 
