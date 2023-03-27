@@ -76,3 +76,12 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(arithmetic_operator_test)
+
+# softfloat util
+add_executable(softfloat_test
+        soft_float_operator/util/softfloat_test.c
+)
+
+add_executable(union_test
+        soft_float_operator/util/union_test.cpp
+)
